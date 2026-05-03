@@ -4,6 +4,25 @@ Todas as mudanças relevantes neste projeto integrador serão documentadas aqui.
 
 ---
 
+## [1.1.3] - 2026-05-03
+### Adicionado
+- **Status Inteligente**: Badge "Agendado" na lista de clientes para pets com horários pendentes.
+- **UI Spacing**: Melhoria no espaçamento entre horário e nome na Agenda/Dashboard.
+
+## [1.1.0] - 2026-05-03
+### Adicionado
+- **Módulo CRM**: Alertas automáticos no Dashboard para pets com retorno sugerido em < 7 dias.
+- **Ação Proativa**: Botão de contato WhatsApp específico para cobrança de retorno (Recall).
+
+## [1.0.0] - 2026-05-03
+### Adicionado
+- **Logística Real**: Integração com Google Maps para traçar rotas multi-paradas baseadas nos endereços de hoje.
+- **WhatsApp Ops**: Mensagens dinâmicas de "A Caminho" incluindo o endereço do cliente.
+- **Financeiro**: Checkout PIX com QR Code simulado e confirmação de recebimento.
+- **Perpetual Demo**: Lógica de datas relativas (dayOffset) que garante que a demo esteja sempre atualizada.
+
+---
+
 ## [0.4.0] - 2026-05-03
 ### Adicionado
 - **Funcionalidades Web**: Implementação das telas de Agenda, Clientes e Configurações.
