@@ -1,13 +1,8 @@
 // --- ESTADO GLOBAL ---
 function getPetFlowData() {
     let data = JSON.parse(localStorage.getItem('petflow_data'));
-    
-    // VERIFICAÇÃO DE INTEGRIDADE: Força reset se campos críticos de novas versões estiverem faltando
     const isMissingFields = data && data.pets && data.pets.length > 0 && !('returnDays' in data.pets[0]);
-    const isOldSchedule = data && data.agendamentos && data.agendamentos.length > 0 && !('dayOffset' in data.agendamentos[0]);
-
-    if (!data || isMissingFields || isOldSchedule || data.agendamentos.length < 5) {
-        console.log("♻️ Dados ausentes ou obsoletos. Restaurando base de demonstração v1.1.0...");
+    if (!data || isMissingFields || data.agendamentos.length < 9) {
         data = seedInitialData();
     }
     return data;
@@ -33,15 +28,12 @@ function getBusinessDate(offset) {
 // --- UI E NAVEGAÇÃO ---
 function showPage(pageId) {
     document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-    const selectedPage = document.getElementById(pageId);
-    if (selectedPage) selectedPage.classList.add('active');
-
+    document.getElementById(pageId).classList.add('active');
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
         const onclick = item.getAttribute('onclick');
         if (onclick && onclick.includes(pageId)) item.classList.add('active');
     });
-
     if (pageId === 'dashboard') renderDashboard();
     if (pageId === 'agenda') renderAgenda();
     if (pageId === 'pets') renderPets();
@@ -63,8 +55,8 @@ function onMyWay(petName, tutor, address) {
     window.open(`https://wa.me/5585999999999?text=${msg}`, '_blank');
 }
 
-function sendRecall(petName, tutor) {
-    const msg = encodeURIComponent(`Oi ${tutor}! 🐾 Notei que já faz um tempo que o ${petName} não toma banho com a gente. Que tal agendarmos para esta semana?🛁`);
+function sendRecall(petName, tutor, days) {
+    const msg = encodeURIComponent(`Oi ${tutor}! 🐾 Notei que o próximo banho do ${petName} é daqui a ${days} dias. Vamos agendar um horário para o Pet Móvel passar aí? 🛁`);
     window.open(`https://wa.me/5585999999999?text=${msg}`, '_blank');
 }
 
@@ -109,10 +101,8 @@ function renderDashboard() {
     const list = document.getElementById('dashboard-route-list');
     const alertsList = document.getElementById('alerts-list');
     const countEl = document.getElementById('today-count');
-    
     if (!list || !alertsList || !countEl) return;
 
-    // 1. Fila de Hoje
     const todayApps = data.agendamentos.filter(a => a.dayOffset === 0 && a.status === 'pendente');
     countEl.innerText = todayApps.length;
     list.innerHTML = todayApps.length === 0 ? '<li style="padding:1.5rem;color:var(--text-muted);text-align:center;">Fila limpa! 🎉</li>' : todayApps.map(a => `
@@ -128,14 +118,12 @@ function renderDashboard() {
         </li>
     `).join('');
 
-    // 2. Alertas de Retorno (CRM)
     const scheduledPetIds = data.agendamentos.map(a => a.pet_id);
     const alertPets = data.pets.filter(p => !scheduledPetIds.includes(p.id) && p.returnDays < 7);
-
     alertsList.innerHTML = alertPets.length === 0 ? '<p style="padding:1rem;font-size:0.8rem;color:var(--text-muted)">Nenhum retorno pendente.</p>' : alertPets.map(p => `
         <div class="alert-item">
-            <div><strong>${p.nome} 🐶</strong><br><span style="font-size:0.75rem; color: #991b1b;">Retorno há ${p.returnDays} dias</span></div>
-            <button class="btn-action" onclick="sendRecall('${p.nome}', '${p.tutor}')">Zap</button>
+            <div><strong>${p.nome} 🐶</strong><br><span style="font-size:0.75rem; color: #991b1b;">Retorno daqui a ${p.returnDays} dias</span></div>
+            <button class="btn-action" onclick="sendRecall('${p.nome}', '${p.tutor}', ${p.returnDays})">Zap</button>
         </div>
     `).join('');
 }
@@ -149,7 +137,7 @@ function renderAgenda() {
         const date = getBusinessDate(offset);
         const dayApps = data.agendamentos.filter(a => a.dayOffset === offset);
         const dayLabel = offset === 0 ? "Hoje" : date.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric' });
-        return `<div style="margin-top:1.5rem;"><h3 style="font-size:0.9rem;color:var(--text-muted);text-transform:capitalize;">${dayLabel}</h3>${dayApps.map(a => `<div class="card" style="padding:0.75rem;border-left:4px solid ${a.status==='concluido'?'var(--success)':'var(--primary)'}"><div style="display:flex;justify-content:space-between;align-items:center;"><div><span class="time">${a.hora}</span><strong>${a.pet_nome}</strong><p style="font-size:0.8rem;color:var(--text-muted);">${a.servico} | ${a.bairro}</p></div><span>${a.status==='concluido'?'✅':'⏳'}</span></div></div>`).join('')}</div>`;
+        return `<div style="margin-top:1.5rem;"><h3 style="font-size:0.9rem;color:var(--text-muted);text-transform:capitalize;">${dayLabel}</h3>${dayApps.map(a => `<div class="card" style="padding: 0.75rem; border-left: 4px solid ${a.status==='concluido'?'var(--success)':'var(--primary)'}"><div style="display:flex;justify-content:space-between;align-items:center;"><div><span class="time">${a.hora}</span><strong>${a.pet_nome}</strong><p style="font-size:0.8rem;color:var(--text-muted);">${a.servico} | ${a.bairro}</p></div><span>${a.status==='concluido'?'✅':'⏳'}</span></div></div>`).join('')}</div>`;
     }).join('');
 }
 
@@ -159,7 +147,6 @@ function renderPets(filter = '') {
     if (!list) return;
     list.innerHTML = '';
     const filtered = data.pets.filter(p => p.nome.toLowerCase().includes(filter.toLowerCase()) || p.tutor.toLowerCase().includes(filter.toLowerCase()));
-    
     filtered.forEach(pet => {
         const days = pet.returnDays || 0;
         let cdClass = days < 3 ? 'cd-urgent' : (days < 7 ? 'cd-soon' : 'cd-ok');
@@ -175,7 +162,7 @@ function searchPets() { renderPets(document.getElementById('pet-search').value);
 
 function openPetProfile(petId) {
     const pet = getPetFlowData().pets.find(p => p.id === petId);
-    document.getElementById('pet-profile-content').innerHTML = `<div style="text-align:center;margin-bottom:1.5rem;"><div style="font-size:3rem;">🐶</div><h1>${pet.nome}</h1><span class="badge">${pet.pelo}</span></div><div class="card"><h2>Tutor</h2><p>${pet.tutor}</p><p>${pet.endereco}</p></div><div class="card"><h2>Controle</h2><p>Sugerimos novo contato em ${pet.returnDays} dias.</p></div>`;
+    document.getElementById('pet-profile-content').innerHTML = `<div style="text-align:center;margin-bottom:1.5rem;"><div style="font-size:3rem;">🐶</div><h1>${pet.nome}</h1><span class="badge">${pet.pelo}</span></div><div class="card"><h2>Tutor</h2><p>${pet.tutor}</p><p>${pet.endereco}</p></div><div class="card"><h2>Controle</h2><p>Sugerimos novo contato daqui a ${pet.returnDays} dias.</p></div>`;
     openModal('modal-profile');
 }
 
@@ -198,13 +185,27 @@ function seedInitialData() {
         { id: 15, nome: "Zeca", pelo: "curto", tutor: "Sérgio", endereco: "Rua Tibúrcio Cavalcante, 600 - Meireles", returnDays: 22 }
     ];
 
-    const agendamentos = [
-        { id: 101, pet_id: 1, pet_nome: "Max", tutor: "Jeronimo", endereco: "Rua Silva Paulet, 120", bairro: "Aldeota", dayOffset: 0, hora: "08:00", servico: "Banho + Hidratação", status: "pendente" },
-        { id: 102, pet_id: 2, pet_nome: "Luna", tutor: "Elaine", endereco: "Av. Dom Luís, 500", bairro: "Meireles", dayOffset: 0, hora: "10:00", servico: "Tosa Higiênica", status: "pendente" },
-        { id: 103, pet_id: 6, pet_nome: "Pipoca", tutor: "Fátima", endereco: "Rua Barbosa de Freitas, 40", bairro: "Aldeota", dayOffset: 0, hora: "14:00", servico: "Banho", status: "pendente" },
-        { id: 104, pet_id: 4, pet_nome: "Mel", tutor: "Daniela", endereco: "Rua Ana Bilhar, 1000", bairro: "Meireles", dayOffset: 1, hora: "09:00", servico: "Banho", status: "pendente" },
-        { id: 105, pet_id: 5, pet_nome: "Thor", tutor: "Henrique", endereco: "Av. Beira Mar, 2500", bairro: "Meireles", dayOffset: 1, hora: "11:00", servico: "Tosa Completa", status: "pendente" }
-    ];
+    const agendamentos = [];
+    const hours = ["08:00", "09:30", "11:00", "14:00", "15:30", "17:00"];
+    let appId = 1;
+
+    [0, 1, 2].forEach(offset => {
+        const dayPets = [...pets].sort(() => 0.5 - Math.random()).slice(0, 3);
+        dayPets.forEach((pet, i) => {
+            agendamentos.push({
+                id: appId++,
+                pet_id: pet.id,
+                pet_nome: pet.nome,
+                tutor: pet.tutor,
+                endereco: pet.endereco,
+                bairro: pet.endereco.split(' - ')[1],
+                dayOffset: offset,
+                hora: hours[i],
+                servico: ["Banho", "Tosa Higiênica", "Banho + Hidratação"][Math.floor(Math.random()*3)],
+                status: "pendente"
+            });
+        });
+    });
 
     const data = { pets, agendamentos };
     savePetFlowData(data);
