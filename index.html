@@ -23,20 +23,20 @@
 
         <!-- Navegação Principal (Tabs no estilo App) -->
         <main id="main-content">
-            <!-- Esta seção será trocada via JS -->
+            <!-- PÁGINA: DASHBOARD -->
             <section id="dashboard" class="page active">
                 <div class="welcome">
                     <h1>Bom dia, Maria! 🐾</h1>
-                    <p>Você tem <strong>4 banhos</strong> e <strong>1 tosa</strong> hoje.</p>
+                    <p>Você tem <strong id="today-count">5</strong> atendimentos hoje.</p>
                 </div>
 
-                <!-- Resumo de Rotas (Destaque do Pet Móvel) -->
                 <div class="card routes-card">
                     <div class="card-header">
                         <h2>📍 Rota do Dia (Aldeota)</h2>
                         <button class="btn-small">Ver Mapa</button>
                     </div>
-                    <ul class="route-list">
+                    <ul class="route-list" id="dashboard-route-list">
+                        <!-- Gerado via JS -->
                         <li class="route-item next">
                             <span class="time">09:00</span>
                             <div class="info">
@@ -46,28 +46,91 @@
                             </div>
                             <span class="status">Próximo</span>
                         </li>
-                        <li class="route-item">
-                            <span class="time">10:30</span>
-                            <div class="info">
-                                <span class="pet-name">Luna (Shih-tzu)</span>
-                                <span class="service">Tosa Higiênica</span>
-                                <span class="address">Av. Dom Luís, 500</span>
-                            </div>
-                        </li>
                     </ul>
                 </div>
 
-                <!-- Notificações/Alertas (Recorrência) -->
                 <div class="card alerts-card">
                     <h2>⚠️ Alertas de Retorno</h2>
-                    <p>Pets que precisam de banho esta semana:</p>
-                    <div class="alert-item">
-                        <span>🐶 Bidu (15 dias)</span>
-                        <button class="btn-action">Zap</button>
+                    <div id="alerts-list">
+                        <!-- Gerado via JS -->
+                        <div class="alert-item">
+                            <span>🐶 Bidu (15 dias)</span>
+                            <button class="btn-action">Zap</button>
+                        </div>
                     </div>
                 </div>
             </section>
+
+            <!-- PÁGINA: AGENDA -->
+            <section id="agenda" class="page">
+                <div class="page-header">
+                    <h1>Calendário 📅</h1>
+                    <button class="btn-primary" onclick="openModal('modal-agenda')">+ Novo</button>
+                </div>
+                <div class="calendar-strip">
+                    <div class="day-bubble active"><span>Hoje</span><strong>03</strong></div>
+                    <div class="day-bubble"><span>Seg</span><strong>04</strong></div>
+                    <div class="day-bubble"><span>Ter</span><strong>05</strong></div>
+                </div>
+                <div class="timeline" id="agenda-timeline">
+                    <!-- Gerado via JS -->
+                </div>
+            </section>
+
+            <!-- PÁGINA: PETS / CADASTRO -->
+            <section id="pets" class="page">
+                <div class="page-header">
+                    <h1>Meus Clientes 🐾</h1>
+                    <button class="btn-primary" onclick="openModal('modal-pet')">+ Cadastro</button>
+                </div>
+                <div class="search-bar">
+                    <input type="text" placeholder="Buscar pet ou tutor..." id="pet-search">
+                </div>
+                <div class="pet-grid" id="pet-list">
+                    <!-- Gerado via JS -->
+                </div>
+            </section>
+
+            <!-- PÁGINA: CONFIGURAÇÕES -->
+            <section id="config" class="page">
+                <h1>Ajustes ⚙️</h1>
+                <div class="card">
+                    <h2>Tabela de Preços (Dâmaris Input)</h2>
+                    <ul class="price-list">
+                        <li><span>Pelo Curto</span> <strong>R$ 50,00</strong></li>
+                        <li><span>Pelo Médio</span> <strong>R$ 70,00</strong></li>
+                        <li><span>Pelo Longo</span> <strong>R$ 90,00</strong></li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h2>Segurança (LGPD)</h2>
+                    <p>Status: <span class="badge">Ativo</span></p>
+                </div>
+            </section>
         </main>
+
+        <!-- MODAIS (Popups) -->
+        <div id="modal-pet" class="modal">
+            <div class="modal-content">
+                <h2>Novo Cadastro</h2>
+                <form id="form-pet">
+                    <label>Nome do Pet</label>
+                    <input type="text" id="new-pet-name" required>
+                    <label>Tipo de Pelo</label>
+                    <select id="new-pet-hair">
+                        <option value="curto">Curto (Labrador/Jack)</option>
+                        <option value="medio">Médio (Shih-tzu)</option>
+                        <option value="longo">Longo (Spitz/Akita)</option>
+                    </select>
+                    <label>Tutor (Nome)</label>
+                    <input type="text" id="new-tutor-name" required>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-link" onclick="closeModal('modal-pet')">Cancelar</button>
+                        <button type="submit" class="btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
         <!-- Menu Inferior (Bottom Nav) -->
         <nav class="bottom-nav">
