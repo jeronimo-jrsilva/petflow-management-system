@@ -1,4 +1,3 @@
-// --- ESTADO GLOBAL E UTILITÁRIOS ---
 function getPetFlowData() {
     return JSON.parse(localStorage.getItem('petflow_data'));
 }
@@ -40,7 +39,6 @@ function showPage(pageId) {
 function openModal(modalId) { 
     const m = document.getElementById(modalId);
     if(m) m.classList.add('active'); 
-    else alert("Funcionalidade em desenvolvimento para o MVP!");
 }
 
 function closeModal(modalId) { 
@@ -50,25 +48,23 @@ function closeModal(modalId) {
 
 function toggleDarkMode() {
     const html = document.documentElement;
-    const btn = document.getElementById('dark-mode-toggle');
     if (html.getAttribute('data-theme') === 'dark') {
         html.removeAttribute('data-theme');
-        btn.innerText = 'Ativar';
         localStorage.setItem('theme', 'light');
     } else {
         html.setAttribute('data-theme', 'dark');
-        btn.innerText = 'Desativar';
         localStorage.setItem('theme', 'dark');
     }
 }
 
 function showMap() {
-    alert("📍 Gerando rota otimizada para o Google Maps...\nBairros: Aldeota, Meireles e Dionísio Torres.");
+    alert("📍 Gerando rota otimizada para o Google Maps...\nBairros atendidos hoje: Aldeota e Meireles.");
 }
 
 // --- RENDERIZAÇÃO ---
 function renderCalendar() {
     const strip = document.getElementById('calendar-strip');
+    if(!strip) return;
     const days = getNextBusinessDays(3);
     const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
     
@@ -109,6 +105,7 @@ function renderDashboard() {
 
 function renderAgenda() {
     const list = document.getElementById('agenda-timeline');
+    if(!list) return;
     const data = getPetFlowData();
     const days = getNextBusinessDays(3);
     
@@ -139,34 +136,72 @@ function renderAgenda() {
 function renderPets(filter = '') {
     const data = getPetFlowData();
     const list = document.getElementById('pet-list');
+    if(!list) return;
     list.innerHTML = '';
 
     const filtered = data.pets.filter(p => 
         p.nome.toLowerCase().includes(filter.toLowerCase()) || 
-        p.tutor.toLowerCase().includes(filter.toLowerCase())
+        p.tutor.toLowerCase().includes(filter.toLowerCase()) ||
+        p.endereco.toLowerCase().includes(filter.toLowerCase())
     );
 
-    if (filtered.length === 0) {
-        list.innerHTML = '<p style="padding: 1rem; color: var(--text-muted);">Nenhum pet encontrado.</p>';
-        return;
-    }
-
     filtered.forEach(pet => {
+        // Cálculo de contagem regressiva (simulado)
+        const diff = Math.floor(Math.random() * 15); // Dias restantes
+        let cdClass = 'cd-ok';
+        if (diff < 3) cdClass = 'cd-urgent';
+        else if (diff < 7) cdClass = 'cd-soon';
+
         const item = document.createElement('div');
-        item.className = 'card';
-        item.style.marginBottom = '1rem';
+        item.className = 'card pet-card';
+        item.onclick = () => openPetProfile(pet.id);
         item.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
                     <h3 style="font-size: 1.1rem;">${pet.nome} 🐶</h3>
-                    <p style="font-size: 0.85rem; color: var(--text-muted);">Tutor: <strong>${pet.tutor}</strong></p>
-                    <p style="font-size: 0.85rem; color: var(--text-muted);">Pelo: ${pet.pelo}</p>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">${pet.endereco}</p>
                 </div>
-                <button class="btn-action" onclick="alert('Iniciando conversa com ${pet.tutor}...')">Zap</button>
+                <span class="countdown-badge ${cdClass}">${diff} dias</span>
             </div>
         `;
         list.appendChild(item);
     });
+}
+
+function openPetProfile(petId) {
+    const data = getPetFlowData();
+    const pet = data.pets.find(p => p.id === petId);
+    const content = document.getElementById('pet-profile-content');
+    
+    content.innerHTML = `
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div style="font-size: 4rem;">🐶</div>
+            <h1 style="font-size: 2rem;">${pet.nome}</h1>
+            <span class="badge">${pet.pelo}</span>
+        </div>
+        
+        <div class="card">
+            <h2>Dados do Tutor</h2>
+            <p><strong>Nome:</strong> ${pet.tutor}</p>
+            <p><strong>Endereço:</strong> ${pet.endereco}</p>
+            <button class="btn-action" style="width: 100%; margin-top: 1rem;" onclick="alert('Chamando no Zap...')">Chamar no WhatsApp</button>
+        </div>
+
+        <div class="card">
+            <h2>Histórico Recente</h2>
+            <ul class="price-list">
+                <li><span>20/04 - Banho</span> <strong>R$ 50,00</strong></li>
+                <li><span>05/04 - Tosa Completa</span> <strong>R$ 90,00</strong></li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>Próxima Sugestão</h2>
+            <p>Com base no ciclo de 15 dias, sugerimos novo banho para:</p>
+            <strong style="color: var(--primary); font-size: 1.2rem;">05/05/2026</strong>
+        </div>
+    `;
+    openModal('modal-profile');
 }
 
 function searchPets() {
@@ -178,11 +213,11 @@ function searchPets() {
 function seedInitialData() {
     const days = getNextBusinessDays(3);
     const pets = [
-        { id: 1, nome: "Max", pelo: "longo", tutor: "Jeronimo" },
-        { id: 2, nome: "Luna", pelo: "medio", tutor: "Elaine" },
-        { id: 3, nome: "Bidu", pelo: "curto", tutor: "Damaris" },
-        { id: 4, nome: "Mel", pelo: "curto", tutor: "Daniela" },
-        { id: 5, nome: "Thor", pelo: "longo", tutor: "Henrique" }
+        { id: 1, nome: "Max", pelo: "longo", tutor: "Jeronimo", endereco: "Rua Silva Paulet, 120 - Aldeota" },
+        { id: 2, nome: "Luna", pelo: "medio", tutor: "Elaine", endereco: "Av. Dom Luís, 500 - Meireles" },
+        { id: 3, nome: "Bidu", pelo: "curto", tutor: "Damaris", endereco: "Rua Maria Tomásia, 300 - Aldeota" },
+        { id: 4, nome: "Mel", pelo: "curto", tutor: "Daniela", endereco: "Rua Ana Bilhar, 1000 - Meireles" },
+        { id: 5, nome: "Thor", pelo: "longo", tutor: "Henrique", endereco: "Av. Beira Mar, 2500 - Meireles" }
     ];
 
     const servicos = ["Banho", "Tosa Higiênica", "Banho + Hidratação", "Tosa Completa"];
@@ -192,8 +227,7 @@ function seedInitialData() {
 
     days.forEach(day => {
         const dateStr = day.toISOString().split('T')[0];
-        // Gera 3 a 4 atendimentos por dia
-        const dailyCount = 3 + Math.floor(Math.random() * 2);
+        const dailyCount = 3;
         const shuffledHours = [...horas].sort(() => 0.5 - Math.random());
         
         for (let i = 0; i < dailyCount; i++) {
@@ -218,17 +252,12 @@ function seedInitialData() {
 
 // --- INICIALIZAÇÃO ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Carrega Tema
     if (localStorage.getItem('theme') === 'dark') {
         document.documentElement.setAttribute('data-theme', 'dark');
-        const btn = document.getElementById('dark-mode-toggle');
-        if (btn) btn.innerText = 'Desativar';
     }
 
-    // Sempre regera os dados dinâmicos para garantir que "Hoje" seja hoje
     seedInitialData();
 
-    // Vincula o formulário
     const form = document.getElementById('form-pet');
     if(form) {
         form.addEventListener('submit', (e) => {
@@ -238,7 +267,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 id: Date.now(),
                 nome: document.getElementById('new-pet-name').value,
                 pelo: document.getElementById('new-pet-hair').value,
-                tutor: document.getElementById('new-tutor-name').value
+                tutor: document.getElementById('new-tutor-name').value,
+                endereco: document.getElementById('new-pet-address').value
             };
             data.pets.push(newPet);
             savePetFlowData(data);
@@ -251,7 +281,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCalendar();
     renderDashboard();
     
-    // Vincula botão de Mapa (que estava quebrado por não ter ID ou onclick no HTML antigo)
     const mapBtn = document.querySelector('.routes-card button');
     if(mapBtn) mapBtn.onclick = showMap;
 });

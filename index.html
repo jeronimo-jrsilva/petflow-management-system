@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PetFlow | Gestão Móvel</title>
     <link rel="stylesheet" href="css/style.css">
-    <!-- Emojis como ícones para rapidez -->
 </head>
 <body>
     <div id="app">
@@ -15,13 +14,16 @@
                 <span class="logo">🚀 PetFlow</span>
                 <span class="badge">Móvel</span>
             </div>
-            <div class="user-profile">
-                <span class="status-dot online"></span>
-                <span class="username">Dona Maria</span>
+            <div class="header-actions">
+                <button id="theme-toggle" class="btn-icon" onclick="toggleDarkMode()">🌓</button>
+                <div class="user-profile">
+                    <span class="status-dot online"></span>
+                    <span class="username">Maria</span>
+                </div>
             </div>
         </header>
 
-        <!-- Navegação Principal (Tabs no estilo App) -->
+        <!-- Navegação Principal -->
         <main id="main-content">
             <!-- PÁGINA: DASHBOARD -->
             <section id="dashboard" class="page active">
@@ -54,50 +56,44 @@
                     <h1>Calendário 📅</h1>
                     <button class="btn-primary" onclick="openModal('modal-agenda')">+ Novo</button>
                 </div>
-                <div class="calendar-strip" id="calendar-strip">
-                    <!-- Gerado dinamicamente via JS (Hoje, Amanhã, Depois) -->
-                </div>
-                <div class="timeline" id="agenda-timeline">
-                    <!-- Gerado via JS -->
-                </div>
+                <div class="calendar-strip" id="calendar-strip"></div>
+                <div class="timeline" id="agenda-timeline"></div>
             </section>
 
-            <!-- PÁGINA: PETS / CADASTRO -->
+            <!-- PÁGINA: PETS / CLIENTES -->
             <section id="pets" class="page">
                 <div class="page-header">
                     <h1>Meus Clientes 🐾</h1>
                     <button class="btn-primary" onclick="openModal('modal-pet')">+ Cadastro</button>
                 </div>
                 <div class="search-bar">
-                    <input type="text" placeholder="Buscar pet ou tutor..." id="pet-search" onkeyup="searchPets()">
+                    <input type="text" placeholder="Buscar pet, tutor ou bairro..." id="pet-search" onkeyup="searchPets()">
                 </div>
-                <div class="pet-grid" id="pet-list">
-                    <!-- Gerado via JS -->
-                </div>
+                <div class="pet-grid" id="pet-list"></div>
             </section>
 
-            <!-- PÁGINA: CONFIGURAÇÕES -->
+            <!-- PÁGINA: VALORES (Antiga Ajustes) -->
             <section id="config" class="page">
-                <h1>Ajustes ⚙️</h1>
+                <h1>Tabela de Valores 💰</h1>
                 <div class="card">
-                    <h2>Visual</h2>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span>Modo Escuro</span>
-                        <button class="btn-small" id="dark-mode-toggle" onclick="toggleDarkMode()">Ativar</button>
-                    </div>
-                </div>
-                <div class="card">
-                    <h2>Tabela de Preços</h2>
+                    <h2>Serviços de Banho</h2>
                     <ul class="price-list">
                         <li><span>Pelo Curto</span> <strong>R$ 50,00</strong></li>
                         <li><span>Pelo Médio</span> <strong>R$ 70,00</strong></li>
                         <li><span>Pelo Longo</span> <strong>R$ 90,00</strong></li>
                     </ul>
                 </div>
+                <div class="card">
+                    <h2>Serviços de Tosa</h2>
+                    <ul class="price-list">
+                        <li><span>Tosa Higiênica</span> <strong>+ R$ 20,00</strong></li>
+                        <li><span>Tosa Completa</span> <strong>+ R$ 40,00</strong></li>
+                    </ul>
+                </div>
             </section>
         </main>
 
-        <!-- MODAIS (Popups) -->
+        <!-- MODAIS -->
         <div id="modal-pet" class="modal">
             <div class="modal-content">
                 <h2>Novo Cadastro</h2>
@@ -112,6 +108,8 @@
                     </select>
                     <label>Tutor (Nome)</label>
                     <input type="text" id="new-tutor-name" required>
+                    <label>Endereço/Bairro</label>
+                    <input type="text" id="new-pet-address" placeholder="Ex: Rua A, Aldeota" required>
                     <div class="modal-actions">
                         <button type="button" class="btn-link" onclick="closeModal('modal-pet')">Cancelar</button>
                         <button type="submit" class="btn-primary">Salvar</button>
@@ -120,7 +118,19 @@
             </div>
         </div>
 
-        <!-- Menu Inferior (Bottom Nav) -->
+        <!-- NOVO: MODAL FICHA DO PET -->
+        <div id="modal-profile" class="modal">
+            <div class="modal-content" style="height: 80vh; overflow-y: auto;">
+                <div id="pet-profile-content">
+                    <!-- Gerado via JS -->
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-primary" style="width: 100%" onclick="closeModal('modal-profile')">Fechar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menu Inferior -->
         <nav class="bottom-nav">
             <button class="nav-item active" onclick="showPage('dashboard')">
                 <span class="icon">🏠</span>
@@ -132,11 +142,11 @@
             </button>
             <button class="nav-item" onclick="showPage('pets')">
                 <span class="icon">🐾</span>
-                <span class="label">Pets</span>
+                <span class="label">Clientes</span>
             </button>
             <button class="nav-item" onclick="showPage('config')">
-                <span class="icon">⚙️</span>
-                <span class="label">Ajustes</span>
+                <span class="icon">💰</span>
+                <span class="label">Valores</span>
             </button>
         </nav>
     </div>
