@@ -130,7 +130,24 @@
             </div>
         </div>
 
-        <!-- Menu Inferior -->
+        <!-- NOVO: MODAL PIX -->
+        <div id="modal-pix" class="modal">
+            <div class="modal-content" style="text-align: center;">
+                <h2>Pagamento PIX 💰</h2>
+                <p id="pix-amount" style="font-size: 1.5rem; font-weight: bold; margin: 1rem 0;"></p>
+                <div style="background: white; padding: 1rem; display: inline-block; border-radius: 1rem;">
+                    <div id="pix-qr" style="font-size: 8rem;">📱</div>
+                    <p style="color: black; font-size: 0.8rem; margin-top: 0.5rem;">[ Simulação de QR Code ]</p>
+                </div>
+                <div class="card" style="text-align: left; background: var(--background);">
+                    <p><strong>Chave:</strong> petflow@pix.com.br</p>
+                    <p><strong>Empresa:</strong> PetFlow Móvel LTDA</p>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-primary" style="width: 100%" onclick="confirmPayment()">Confirmar Recebimento</button>
+                </div>
+            </div>
+        </div>
         <nav class="bottom-nav">
             <button class="nav-item active" onclick="showPage('dashboard')">
                 <span class="icon">🏠</span>
