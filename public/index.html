@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetFlow | Gestão Móvel</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Emojis como ícones para rapidez -->
+</head>
+<body>
+    <div id="app">
+        <!-- Header fixo -->
+        <header>
+            <div class="brand">
+                <span class="logo">🚀 PetFlow</span>
+                <span class="badge">Móvel</span>
+            </div>
+            <div class="user-profile">
+                <span class="status-dot online"></span>
+                <span class="username">Dona Maria</span>
+            </div>
+        </header>
+
+        <!-- Navegação Principal (Tabs no estilo App) -->
+        <main id="main-content">
+            <!-- Esta seção será trocada via JS -->
+            <section id="dashboard" class="page active">
+                <div class="welcome">
+                    <h1>Bom dia, Maria! 🐾</h1>
+                    <p>Você tem <strong>4 banhos</strong> e <strong>1 tosa</strong> hoje.</p>
+                </div>
+
+                <!-- Resumo de Rotas (Destaque do Pet Móvel) -->
+                <div class="card routes-card">
+                    <div class="card-header">
+                        <h2>📍 Rota do Dia (Aldeota)</h2>
+                        <button class="btn-small">Ver Mapa</button>
+                    </div>
+                    <ul class="route-list">
+                        <li class="route-item next">
+                            <span class="time">09:00</span>
+                            <div class="info">
+                                <span class="pet-name">Max (Golden)</span>
+                                <span class="service">Banho + Hidratação</span>
+                                <span class="address">Rua Silva Paulet, 120</span>
+                            </div>
+                            <span class="status">Próximo</span>
+                        </li>
+                        <li class="route-item">
+                            <span class="time">10:30</span>
+                            <div class="info">
+                                <span class="pet-name">Luna (Shih-tzu)</span>
+                                <span class="service">Tosa Higiênica</span>
+                                <span class="address">Av. Dom Luís, 500</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Notificações/Alertas (Recorrência) -->
+                <div class="card alerts-card">
+                    <h2>⚠️ Alertas de Retorno</h2>
+                    <p>Pets que precisam de banho esta semana:</p>
+                    <div class="alert-item">
+                        <span>🐶 Bidu (15 dias)</span>
+                        <button class="btn-action">Zap</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Menu Inferior (Bottom Nav) -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="showPage('dashboard')">
+                <span class="icon">🏠</span>
+                <span class="label">Início</span>
+            </button>
+            <button class="nav-item" onclick="showPage('agenda')">
+                <span class="icon">📅</span>
+                <span class="label">Agenda</span>
+            </button>
+            <button class="nav-item" onclick="showPage('pets')">
+                <span class="icon">🐾</span>
+                <span class="label">Pets</span>
+            </button>
+            <button class="nav-item" onclick="showPage('config')">
+                <span class="icon">⚙️</span>
+                <span class="label">Ajustes</span>
+            </button>
+        </nav>
+    </div>
+    <script src="js/app.js"></script>
+</body>
+</html>
