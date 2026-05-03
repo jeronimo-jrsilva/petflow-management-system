@@ -109,7 +109,7 @@ function renderDashboard() {
         <li class="route-item" style="flex-direction:column;align-items:flex-start;gap:0.75rem;padding:1.25rem 0;border-bottom:1px solid var(--border);">
             <div style="display:flex;justify-content:space-between;width:100%;">
                 <span class="time">${a.hora}</span>
-                <div style="flex:1;margin-left:1rem;"><strong>${a.pet_nome}</strong><br><span style="font-size:0.8rem">${a.servico} | ${a.bairro}</span></div>
+                <div style="flex:1;margin-left:1.5rem;"><strong>${a.pet_nome}</strong><br><span style="font-size:0.8rem">${a.servico} | ${a.bairro}</span></div>
             </div>
             <div style="display:flex;gap:0.5rem;width:100%;">
                 <button class="btn-small" style="flex:1" onclick="onMyWay('${a.pet_nome}', '${a.tutor}', '${a.endereco}')">🚀 A caminho</button>
@@ -118,7 +118,7 @@ function renderDashboard() {
         </li>
     `).join('');
 
-    const scheduledPetIds = data.agendamentos.map(a => a.pet_id);
+    const scheduledPetIds = data.agendamentos.filter(a => a.status === 'pendente').map(a => a.pet_id);
     const alertPets = data.pets.filter(p => !scheduledPetIds.includes(p.id) && p.returnDays < 7);
     alertsList.innerHTML = alertPets.length === 0 ? '<p style="padding:1rem;font-size:0.8rem;color:var(--text-muted)">Nenhum retorno pendente.</p>' : alertPets.map(p => `
         <div class="alert-item">
@@ -137,7 +137,7 @@ function renderAgenda() {
         const date = getBusinessDate(offset);
         const dayApps = data.agendamentos.filter(a => a.dayOffset === offset);
         const dayLabel = offset === 0 ? "Hoje" : date.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric' });
-        return `<div style="margin-top:1.5rem;"><h3 style="font-size:0.9rem;color:var(--text-muted);text-transform:capitalize;">${dayLabel}</h3>${dayApps.map(a => `<div class="card" style="padding: 0.75rem; border-left: 4px solid ${a.status==='concluido'?'var(--success)':'var(--primary)'}"><div style="display:flex;justify-content:space-between;align-items:center;"><div><span class="time">${a.hora}</span><strong>${a.pet_nome}</strong><p style="font-size:0.8rem;color:var(--text-muted);">${a.servico} | ${a.bairro}</p></div><span>${a.status==='concluido'?'✅':'⏳'}</span></div></div>`).join('')}</div>`;
+        return `<div style="margin-top:1.5rem;"><h3 style="font-size:0.9rem;color:var(--text-muted);text-transform:capitalize;">${dayLabel}</h3>${dayApps.map(a => `<div class="card" style="padding: 0.75rem; border-left: 4px solid ${a.status==='concluido'?'var(--success)':'var(--primary)'}"><div style="display:flex;justify-content:space-between;align-items:center;"><div><span class="time" style="margin-right: 1.5rem;">${a.hora}</span><strong>${a.pet_nome}</strong><p style="font-size:0.8rem;color:var(--text-muted);">${a.servico} | ${a.bairro}</p></div><span>${a.status==='concluido'?'✅':'⏳'}</span></div></div>`).join('')}</div>`;
     }).join('');
 }
 
@@ -146,14 +146,39 @@ function renderPets(filter = '') {
     const list = document.getElementById('pet-list');
     if (!list) return;
     list.innerHTML = '';
+    
+    // IDs de pets que já têm agendamento pendente
+    const scheduledPetIds = data.agendamentos.filter(a => a.status === 'pendente').map(a => a.pet_id);
+
     const filtered = data.pets.filter(p => p.nome.toLowerCase().includes(filter.toLowerCase()) || p.tutor.toLowerCase().includes(filter.toLowerCase()));
+    
     filtered.forEach(pet => {
+        const isScheduled = scheduledPetIds.includes(pet.id);
         const days = pet.returnDays || 0;
-        let cdClass = days < 3 ? 'cd-urgent' : (days < 7 ? 'cd-soon' : 'cd-ok');
+        
+        let cdClass = 'cd-ok';
+        let statusText = `${days}d`;
+        
+        if (isScheduled) {
+            cdClass = 'cd-ok'; // Estilo verde/neutro para agendados
+            statusText = 'Agendado';
+        } else {
+            if (days < 3) cdClass = 'cd-urgent';
+            else if (days < 7) cdClass = 'cd-soon';
+        }
+
         const item = document.createElement('div');
         item.className = 'card pet-card';
         item.onclick = () => openPetProfile(pet.id);
-        item.innerHTML = `<div style="display:flex;justify-content:space-between;"><div><h3>${pet.nome} 🐶</h3><p style="font-size:0.8rem;color:var(--text-muted);">${pet.endereco}</p></div><span class="countdown-badge ${cdClass}">${days}d</span></div>`;
+        item.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3>${pet.nome} 🐶</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">${pet.endereco}</p>
+                </div>
+                <span class="countdown-badge ${cdClass}">${statusText}</span>
+            </div>
+        `;
         list.appendChild(item);
     });
 }
@@ -161,8 +186,20 @@ function renderPets(filter = '') {
 function searchPets() { renderPets(document.getElementById('pet-search').value); }
 
 function openPetProfile(petId) {
-    const pet = getPetFlowData().pets.find(p => p.id === petId);
-    document.getElementById('pet-profile-content').innerHTML = `<div style="text-align:center;margin-bottom:1.5rem;"><div style="font-size:3rem;">🐶</div><h1>${pet.nome}</h1><span class="badge">${pet.pelo}</span></div><div class="card"><h2>Tutor</h2><p>${pet.tutor}</p><p>${pet.endereco}</p></div><div class="card"><h2>Controle</h2><p>Sugerimos novo contato daqui a ${pet.returnDays} dias.</p></div>`;
+    const data = getPetFlowData();
+    const pet = data.pets.find(p => p.id === petId);
+    const scheduledPetIds = data.agendamentos.filter(a => a.status === 'pendente').map(a => a.pet_id);
+    const isScheduled = scheduledPetIds.includes(pet.id);
+    
+    const statusMsg = isScheduled ? 
+        `<strong style="color: var(--success)">Este pet já possui um atendimento agendado.</strong>` : 
+        `Sugerimos novo contato daqui a ${pet.returnDays} dias.`;
+
+    document.getElementById('pet-profile-content').innerHTML = `
+        <div style="text-align:center;margin-bottom:1.5rem;"><div style="font-size:3rem;">🐶</div><h1>${pet.nome}</h1><span class="badge">${pet.pelo}</span></div>
+        <div class="card"><h2>Tutor</h2><p>${pet.tutor}</p><p>${pet.endereco}</p></div>
+        <div class="card"><h2>Controle Operacional</h2><p>${statusMsg}</p></div>
+    `;
     openModal('modal-profile');
 }
 
