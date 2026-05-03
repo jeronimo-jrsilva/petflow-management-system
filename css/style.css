@@ -19,6 +19,24 @@
     --border: #334155;
 }
 
+[data-theme="dark"] .btn-small {
+    background: #334155;
+    color: #f1f5f9;
+    border-color: #475569;
+}
+
+[data-theme="dark"] input, 
+[data-theme="dark"] select, 
+[data-theme="dark"] .search-bar input {
+    background: #1e293b;
+    color: #f1f5f9;
+    border-color: #334155;
+}
+
+[data-theme="dark"] input::placeholder {
+    color: #64748b;
+}
+
 * {
     margin: 0;
     padding: 0;
