@@ -1,7 +1,12 @@
 // --- ESTADO GLOBAL ---
 function getPetFlowData() {
     let data = JSON.parse(localStorage.getItem('petflow_data'));
-    if (!data || !data.agendamentos || data.agendamentos.length < 5) {
+    
+    // FORÇA O RESET: Se os dados não tiverem a nova lógica de 'dayOffset', limpamos para gerar o novo padrão.
+    const isOldFormat = data && data.agendamentos && data.agendamentos.length > 0 && !('dayOffset' in data.agendamentos[0]);
+    
+    if (!data || !data.agendamentos || data.agendamentos.length < 5 || isOldFormat) {
+        console.log("♻️ Detectado formato antigo ou sem dados. Gerando nova base de demonstração...");
         data = seedInitialData();
     }
     return data;
@@ -19,21 +24,21 @@ function getBusinessDate(offset) {
         current.setDate(current.getDate() + 1);
         if (current.getDay() !== 0 && current.getDay() !== 6) added++;
     }
-    // Se cair no fim de semana na partida, pula para segunda
     if (current.getDay() === 0) current.setDate(current.getDate() + 1);
     if (current.getDay() === 6) current.setDate(current.getDate() + 2);
-    
     return current;
 }
 
 // --- UI E NAVEGAÇÃO ---
 function showPage(pageId) {
     document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-    document.getElementById(pageId).classList.add('active');
+    const selectedPage = document.getElementById(pageId);
+    if (selectedPage) selectedPage.classList.add('active');
 
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
-        if (item.getAttribute('onclick').includes(pageId)) item.classList.add('active');
+        const onclick = item.getAttribute('onclick');
+        if (onclick && onclick.includes(pageId)) item.classList.add('active');
     });
 
     if (pageId === 'dashboard') renderDashboard();
@@ -83,13 +88,17 @@ function confirmPayment() {
 function renderDashboard() {
     const data = getPetFlowData();
     const list = document.getElementById('dashboard-route-list');
-    // Dashboard mostra apenas o "Dia 0" (Hoje)
+    const countEl = document.getElementById('today-count');
+    
+    if (!list || !countEl) return;
+
+    // Filtra atendimentos pendentes do "Dia 0" (Hoje)
     const todayApps = data.agendamentos.filter(a => a.dayOffset === 0 && a.status === 'pendente');
 
-    document.getElementById('today-count').innerText = todayApps.length;
+    countEl.innerText = todayApps.length;
     
     if (todayApps.length === 0) {
-        list.innerHTML = '<li class="route-item" style="color: var(--text-muted)">Nenhum atendimento pendente para hoje. 🎉</li>';
+        list.innerHTML = '<li class="route-item" style="color: var(--text-muted); padding: 1rem;">Nenhum atendimento pendente para hoje. 🎉</li>';
         return;
     }
 
@@ -113,6 +122,7 @@ function renderDashboard() {
 function renderAgenda() {
     const data = getPetFlowData();
     const list = document.getElementById('agenda-timeline');
+    if (!list) return;
     const offsets = [0, 1, 2];
     
     list.innerHTML = offsets.map(offset => {
@@ -143,6 +153,7 @@ function renderAgenda() {
 function renderPets(filter = '') {
     const data = getPetFlowData();
     const list = document.getElementById('pet-list');
+    if (!list) return;
     list.innerHTML = '';
     const filtered = data.pets.filter(p => p.nome.toLowerCase().includes(filter.toLowerCase()) || p.tutor.toLowerCase().includes(filter.toLowerCase()));
 
@@ -204,18 +215,23 @@ function seedInitialData() {
         { id: 109, pet_nome: "Zeca", tutor: "Sérgio", bairro: "Meireles", dayOffset: 2, hora: "14:30", servico: "Banho", status: "pendente" }
     ];
 
-    const data = { tutores: [], pets, agendamentos };
+    const data = { pets, agendamentos };
     savePetFlowData(data);
     return data;
 }
 
 // --- INICIALIZAÇÃO ---
 document.addEventListener('DOMContentLoaded', () => {
+    // Tema
     if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
     
-    // Sempre carrega os dados
-    const data = getPetFlowData();
+    // Dados (Força reset se necessário)
+    getPetFlowData();
     
+    // Renderiza o Dashboard por padrão no carregamento
+    renderDashboard();
+
+    // Vincula Cadastro
     const form = document.getElementById('form-pet');
     if(form) {
         form.onsubmit = (e) => {
@@ -235,10 +251,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Renderização inicial
-    renderDashboard();
-    
-    // Configura botões globais
-    const mapBtn = document.querySelector('.routes-card button');
-    if(mapBtn) mapBtn.onclick = () => alert("📍 Rota otimizada gerada para o dia!");
+    // Configura botões de Mapa
+    document.querySelectorAll('.routes-card button').forEach(btn => {
+        btn.onclick = () => alert("📍 Gerando rota otimizada para o Google Maps...");
+    });
 });
