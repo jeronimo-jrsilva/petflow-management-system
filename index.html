@@ -27,25 +27,16 @@
             <section id="dashboard" class="page active">
                 <div class="welcome">
                     <h1>Bom dia, Maria! 🐾</h1>
-                    <p>Você tem <strong id="today-count">5</strong> atendimentos hoje.</p>
+                    <p>Você tem <strong id="today-count">0</strong> atendimentos hoje.</p>
                 </div>
 
                 <div class="card routes-card">
                     <div class="card-header">
-                        <h2>📍 Rota do Dia (Aldeota)</h2>
+                        <h2>📍 Próximos Atendimentos</h2>
                         <button class="btn-small">Ver Mapa</button>
                     </div>
                     <ul class="route-list" id="dashboard-route-list">
                         <!-- Gerado via JS -->
-                        <li class="route-item next">
-                            <span class="time">09:00</span>
-                            <div class="info">
-                                <span class="pet-name">Max (Golden)</span>
-                                <span class="service">Banho + Hidratação</span>
-                                <span class="address">Rua Silva Paulet, 120</span>
-                            </div>
-                            <span class="status">Próximo</span>
-                        </li>
                     </ul>
                 </div>
 
@@ -53,10 +44,6 @@
                     <h2>⚠️ Alertas de Retorno</h2>
                     <div id="alerts-list">
                         <!-- Gerado via JS -->
-                        <div class="alert-item">
-                            <span>🐶 Bidu (15 dias)</span>
-                            <button class="btn-action">Zap</button>
-                        </div>
                     </div>
                 </div>
             </section>
@@ -67,10 +54,8 @@
                     <h1>Calendário 📅</h1>
                     <button class="btn-primary" onclick="openModal('modal-agenda')">+ Novo</button>
                 </div>
-                <div class="calendar-strip">
-                    <div class="day-bubble active"><span>Hoje</span><strong>03</strong></div>
-                    <div class="day-bubble"><span>Seg</span><strong>04</strong></div>
-                    <div class="day-bubble"><span>Ter</span><strong>05</strong></div>
+                <div class="calendar-strip" id="calendar-strip">
+                    <!-- Gerado dinamicamente via JS (Hoje, Amanhã, Depois) -->
                 </div>
                 <div class="timeline" id="agenda-timeline">
                     <!-- Gerado via JS -->
@@ -84,7 +69,7 @@
                     <button class="btn-primary" onclick="openModal('modal-pet')">+ Cadastro</button>
                 </div>
                 <div class="search-bar">
-                    <input type="text" placeholder="Buscar pet ou tutor..." id="pet-search">
+                    <input type="text" placeholder="Buscar pet ou tutor..." id="pet-search" onkeyup="searchPets()">
                 </div>
                 <div class="pet-grid" id="pet-list">
                     <!-- Gerado via JS -->
@@ -95,16 +80,19 @@
             <section id="config" class="page">
                 <h1>Ajustes ⚙️</h1>
                 <div class="card">
-                    <h2>Tabela de Preços (Dâmaris Input)</h2>
+                    <h2>Visual</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>Modo Escuro</span>
+                        <button class="btn-small" id="dark-mode-toggle" onclick="toggleDarkMode()">Ativar</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2>Tabela de Preços</h2>
                     <ul class="price-list">
                         <li><span>Pelo Curto</span> <strong>R$ 50,00</strong></li>
                         <li><span>Pelo Médio</span> <strong>R$ 70,00</strong></li>
                         <li><span>Pelo Longo</span> <strong>R$ 90,00</strong></li>
                     </ul>
-                </div>
-                <div class="card">
-                    <h2>Segurança (LGPD)</h2>
-                    <p>Status: <span class="badge">Ativo</span></p>
                 </div>
             </section>
         </main>
