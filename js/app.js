@@ -1,8 +1,13 @@
 // --- ESTADO GLOBAL ---
 function getPetFlowData() {
     let data = JSON.parse(localStorage.getItem('petflow_data'));
-    const isOldFormat = data && data.agendamentos && data.agendamentos.length > 0 && !('dayOffset' in data.agendamentos[0]);
-    if (!data || !data.agendamentos || data.agendamentos.length < 5 || isOldFormat) {
+    
+    // VERIFICAÇÃO DE INTEGRIDADE: Força reset se campos críticos de novas versões estiverem faltando
+    const isMissingFields = data && data.pets && data.pets.length > 0 && !('returnDays' in data.pets[0]);
+    const isOldSchedule = data && data.agendamentos && data.agendamentos.length > 0 && !('dayOffset' in data.agendamentos[0]);
+
+    if (!data || isMissingFields || isOldSchedule || data.agendamentos.length < 5) {
+        console.log("♻️ Dados ausentes ou obsoletos. Restaurando base de demonstração v1.1.0...");
         data = seedInitialData();
     }
     return data;
@@ -59,7 +64,7 @@ function onMyWay(petName, tutor, address) {
 }
 
 function sendRecall(petName, tutor) {
-    const msg = encodeURIComponent(`Oi ${tutor}! 🐾 Notei que já faz um tempo que o ${petName} não toma banho com a gente. Que tal agendarmos para esta semana? Temos horários na Aldeota! 🛁`);
+    const msg = encodeURIComponent(`Oi ${tutor}! 🐾 Notei que já faz um tempo que o ${petName} não toma banho com a gente. Que tal agendarmos para esta semana?🛁`);
     window.open(`https://wa.me/5585999999999?text=${msg}`, '_blank');
 }
 
@@ -94,7 +99,8 @@ function showMap() {
 }
 
 function resetDemo() {
-    if (confirm("Reiniciar demo?")) { localStorage.clear(); location.reload(); }
+    localStorage.clear();
+    location.reload();
 }
 
 // --- RENDERIZAÇÃO ---
@@ -104,10 +110,12 @@ function renderDashboard() {
     const alertsList = document.getElementById('alerts-list');
     const countEl = document.getElementById('today-count');
     
-    // 1. Rota de Hoje
+    if (!list || !alertsList || !countEl) return;
+
+    // 1. Fila de Hoje
     const todayApps = data.agendamentos.filter(a => a.dayOffset === 0 && a.status === 'pendente');
     countEl.innerText = todayApps.length;
-    list.innerHTML = todayApps.length === 0 ? '<li style="padding:1rem;color:var(--text-muted)">Fila limpa! 🎉</li>' : todayApps.map(a => `
+    list.innerHTML = todayApps.length === 0 ? '<li style="padding:1.5rem;color:var(--text-muted);text-align:center;">Fila limpa! 🎉</li>' : todayApps.map(a => `
         <li class="route-item" style="flex-direction:column;align-items:flex-start;gap:0.75rem;padding:1.25rem 0;border-bottom:1px solid var(--border);">
             <div style="display:flex;justify-content:space-between;width:100%;">
                 <span class="time">${a.hora}</span>
@@ -120,17 +128,13 @@ function renderDashboard() {
         </li>
     `).join('');
 
-    // 2. LÓGICA DE ALERTAS (CRM)
-    // Encontra pets sem agendamento futuro com retorno < 7 dias
-    const petsScheduledIds = data.agendamentos.map(a => a.pet_id);
-    const alertPets = data.pets.filter(p => !petsScheduledIds.includes(p.id) && p.returnDays < 7);
+    // 2. Alertas de Retorno (CRM)
+    const scheduledPetIds = data.agendamentos.map(a => a.pet_id);
+    const alertPets = data.pets.filter(p => !scheduledPetIds.includes(p.id) && p.returnDays < 7);
 
-    alertsList.innerHTML = alertPets.length === 0 ? '<p style="padding:1rem;font-size:0.8rem">Nenhum pet pendente de retorno.</p>' : alertPets.map(p => `
+    alertsList.innerHTML = alertPets.length === 0 ? '<p style="padding:1rem;font-size:0.8rem;color:var(--text-muted)">Nenhum retorno pendente.</p>' : alertPets.map(p => `
         <div class="alert-item">
-            <div>
-                <strong style="display:block">${p.nome} 🐶</strong>
-                <span style="font-size:0.75rem; color: #991b1b;">Sugerido há ${p.returnDays} dias</span>
-            </div>
+            <div><strong>${p.nome} 🐶</strong><br><span style="font-size:0.75rem; color: #991b1b;">Retorno há ${p.returnDays} dias</span></div>
             <button class="btn-action" onclick="sendRecall('${p.nome}', '${p.tutor}')">Zap</button>
         </div>
     `).join('');
@@ -139,6 +143,7 @@ function renderDashboard() {
 function renderAgenda() {
     const data = getPetFlowData();
     const list = document.getElementById('agenda-timeline');
+    if (!list) return;
     const offsets = [0, 1, 2];
     list.innerHTML = offsets.map(offset => {
         const date = getBusinessDate(offset);
@@ -151,21 +156,26 @@ function renderAgenda() {
 function renderPets(filter = '') {
     const data = getPetFlowData();
     const list = document.getElementById('pet-list');
+    if (!list) return;
     list.innerHTML = '';
     const filtered = data.pets.filter(p => p.nome.toLowerCase().includes(filter.toLowerCase()) || p.tutor.toLowerCase().includes(filter.toLowerCase()));
+    
     filtered.forEach(pet => {
-        let cdClass = pet.returnDays < 3 ? 'cd-urgent' : (pet.returnDays < 7 ? 'cd-soon' : 'cd-ok');
+        const days = pet.returnDays || 0;
+        let cdClass = days < 3 ? 'cd-urgent' : (days < 7 ? 'cd-soon' : 'cd-ok');
         const item = document.createElement('div');
         item.className = 'card pet-card';
         item.onclick = () => openPetProfile(pet.id);
-        item.innerHTML = `<div style="display:flex;justify-content:space-between;"><div><h3>${pet.nome} 🐶</h3><p style="font-size:0.8rem;color:var(--text-muted);">${pet.endereco}</p></div><span class="countdown-badge ${cdClass}">${pet.returnDays}d</span></div>`;
+        item.innerHTML = `<div style="display:flex;justify-content:space-between;"><div><h3>${pet.nome} 🐶</h3><p style="font-size:0.8rem;color:var(--text-muted);">${pet.endereco}</p></div><span class="countdown-badge ${cdClass}">${days}d</span></div>`;
         list.appendChild(item);
     });
 }
 
+function searchPets() { renderPets(document.getElementById('pet-search').value); }
+
 function openPetProfile(petId) {
     const pet = getPetFlowData().pets.find(p => p.id === petId);
-    document.getElementById('pet-profile-content').innerHTML = `<div style="text-align:center;margin-bottom:1.5rem;"><div style="font-size:3rem;">🐶</div><h1>${pet.nome}</h1><span class="badge">${pet.pelo}</span></div><div class="card"><h2>Tutor</h2><p>${pet.tutor}</p><p>${pet.endereco}</p></div><div class="card"><h2>CRM</h2><p>Retorno sugerido em ${pet.returnDays} dias.</p></div>`;
+    document.getElementById('pet-profile-content').innerHTML = `<div style="text-align:center;margin-bottom:1.5rem;"><div style="font-size:3rem;">🐶</div><h1>${pet.nome}</h1><span class="badge">${pet.pelo}</span></div><div class="card"><h2>Tutor</h2><p>${pet.tutor}</p><p>${pet.endereco}</p></div><div class="card"><h2>Controle</h2><p>Sugerimos novo contato em ${pet.returnDays} dias.</p></div>`;
     openModal('modal-profile');
 }
 
