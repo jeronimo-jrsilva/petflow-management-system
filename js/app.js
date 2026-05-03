@@ -1,12 +1,8 @@
 // --- ESTADO GLOBAL ---
 function getPetFlowData() {
     let data = JSON.parse(localStorage.getItem('petflow_data'));
-    
-    // FORÇA O RESET: Se os dados não tiverem a nova lógica de 'dayOffset', limpamos para gerar o novo padrão.
     const isOldFormat = data && data.agendamentos && data.agendamentos.length > 0 && !('dayOffset' in data.agendamentos[0]);
-    
     if (!data || !data.agendamentos || data.agendamentos.length < 5 || isOldFormat) {
-        console.log("♻️ Detectado formato antigo ou sem dados. Gerando nova base de demonstração...");
         data = seedInitialData();
     }
     return data;
@@ -16,7 +12,7 @@ function savePetFlowData(data) {
     localStorage.setItem('petflow_data', JSON.stringify(data));
 }
 
-// Lógica de Calendário (Pula Fim de Semana para Exibição)
+// Lógica de Calendário
 function getBusinessDate(offset) {
     let current = new Date();
     let added = 0;
@@ -32,8 +28,7 @@ function getBusinessDate(offset) {
 // --- UI E NAVEGAÇÃO ---
 function showPage(pageId) {
     document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-    const selectedPage = document.getElementById(pageId);
-    if (selectedPage) selectedPage.classList.add('active');
+    document.getElementById(pageId).classList.add('active');
 
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
@@ -57,8 +52,12 @@ function toggleDarkMode() {
 }
 
 // --- OPERAÇÃO ---
-function onMyWay(petName, tutor) {
-    alert(`📢 WhatsApp para ${tutor}:\n"Oi! O PetFlow está a caminho para o atendimento do ${petName}!"`);
+function onMyWay(petName, tutor, address) {
+    const msg = encodeURIComponent(`Olá ${tutor}! 🐾 O PetFlow já está a caminho para o atendimento do ${petName} no endereço: ${address}. Chegamos em breve! 🚀`);
+    const waLink = `https://wa.me/5585999999999?text=${msg}`;
+    
+    alert(`📢 Simulando envio de WhatsApp para ${tutor}...\n\nDestino: ${address}`);
+    window.open(waLink, '_blank');
 }
 
 function completeAppointment(id) {
@@ -75,11 +74,13 @@ function confirmPayment() {
     const id = document.getElementById('modal-pix').getAttribute('data-current-id');
     const data = getPetFlowData();
     const appIndex = data.agendamentos.findIndex(a => a.id == id);
+    
     if (appIndex > -1) {
         data.agendamentos[appIndex].status = 'concluido';
         savePetFlowData(data);
     }
-    alert("✅ Pagamento confirmado!");
+    
+    alert("✅ Pagamento confirmado! O atendimento foi removido da fila de hoje.");
     closeModal('modal-pix');
     renderDashboard();
 }
@@ -92,28 +93,27 @@ function renderDashboard() {
     
     if (!list || !countEl) return;
 
-    // Filtra atendimentos pendentes do "Dia 0" (Hoje)
     const todayApps = data.agendamentos.filter(a => a.dayOffset === 0 && a.status === 'pendente');
-
     countEl.innerText = todayApps.length;
     
     if (todayApps.length === 0) {
-        list.innerHTML = '<li class="route-item" style="color: var(--text-muted); padding: 1rem;">Nenhum atendimento pendente para hoje. 🎉</li>';
+        list.innerHTML = '<li class="route-item" style="color: var(--text-muted); padding: 1.5rem; text-align: center;">Todos os atendimentos de hoje foram concluídos! 🎉</li>';
         return;
     }
 
     list.innerHTML = todayApps.map(a => `
-        <li class="route-item" style="flex-direction: column; align-items: flex-start; gap: 0.5rem; padding: 1rem 0;">
+        <li class="route-item" style="flex-direction: column; align-items: flex-start; gap: 0.75rem; padding: 1.25rem 0; border-bottom: 1px solid var(--border);">
             <div style="display: flex; justify-content: space-between; width: 100%;">
-                <span class="time">${a.hora}</span>
+                <span class="time" style="font-size: 1.1rem;">${a.hora}</span>
                 <div style="flex: 1; margin-left: 1rem;">
-                    <strong class="pet-name">${a.pet_nome}</strong>
-                    <span class="service">${a.servico} - ${a.bairro}</span>
+                    <strong class="pet-name" style="font-size: 1.1rem;">${a.pet_nome}</strong>
+                    <span class="service" style="display: block;">${a.servico}</span>
+                    <span style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">📍 ${a.endereco}</span>
                 </div>
             </div>
-            <div style="display: flex; gap: 0.5rem; width: 100%;">
-                <button class="btn-small" onclick="onMyWay('${a.pet_nome}', '${a.tutor}')">🚀 A caminho</button>
-                <button class="btn-small" style="background: var(--success); color: white;" onclick="completeAppointment(${a.id})">✅ Concluir</button>
+            <div style="display: flex; gap: 0.5rem; width: 100%; margin-top: 0.5rem;">
+                <button class="btn-small" style="flex: 1; padding: 0.75rem;" onclick="onMyWay('${a.pet_nome}', '${a.tutor}', '${a.endereco}')">🚀 A caminho</button>
+                <button class="btn-small" style="flex: 1; padding: 0.75rem; background: var(--success); color: white;" onclick="completeAppointment(${a.id})">✅ Concluir</button>
             </div>
         </li>
     `).join('');
@@ -183,36 +183,33 @@ function openPetProfile(petId) {
 // --- DADOS INICIAIS (15 PETS FIXOS) ---
 function seedInitialData() {
     const pets = [
-        { id: 1, nome: "Max", pelo: "longo", tutor: "Jeronimo", endereco: "Rua Silva Paulet - Aldeota" },
-        { id: 2, nome: "Luna", pelo: "medio", tutor: "Elaine", endereco: "Av. Dom Luís - Meireles" },
-        { id: 3, nome: "Bidu", pelo: "curto", tutor: "Damaris", endereco: "Rua Maria Tomásia - Aldeota" },
-        { id: 4, nome: "Mel", pelo: "curto", tutor: "Daniela", endereco: "Rua Ana Bilhar - Meireles" },
-        { id: 5, nome: "Thor", pelo: "longo", tutor: "Henrique", endereco: "Av. Beira Mar - Meireles" },
-        { id: 6, nome: "Pipoca", pelo: "medio", tutor: "Fátima", endereco: "Rua Barbosa de Freitas - Aldeota" },
-        { id: 7, nome: "Amora", pelo: "curto", tutor: "Cláudio", endereco: "Rua Desembargador Leite Albuquerque - Aldeota" },
-        { id: 8, nome: "Frederico", pelo: "longo", tutor: "Sônia", endereco: "Rua Norvinda Pires - Meireles" },
-        { id: 9, nome: "Cookie", pelo: "medio", tutor: "Roberto", endereco: "Av. Santos Dumont - Aldeota" },
-        { id: 10, nome: "Bolinha", pelo: "curto", tutor: "Márcia", endereco: "Rua Canuto de Aguiar - Meireles" },
-        { id: 11, nome: "Rex", pelo: "curto", tutor: "Antônio", endereco: "Rua Vicente Leite - Aldeota" },
-        { id: 12, nome: "Belinha", pelo: "medio", tutor: "Patrícia", endereco: "Rua Pe. Valdevino - Aldeota" },
-        { id: 13, nome: "Floquinho", pelo: "longo", tutor: "Carlos", endereco: "Av. Abolição - Meireles" },
-        { id: 14, nome: "Pandora", pelo: "medio", tutor: "Bruna", endereco: "Rua Joaquim Nabuco - Aldeota" },
-        { id: 15, nome: "Zeca", pelo: "curto", tutor: "Sérgio", endereco: "Rua Tibúrcio Cavalcante - Meireles" }
+        { id: 1, nome: "Max", pelo: "longo", tutor: "Jeronimo", endereco: "Rua Silva Paulet, 120 - Aldeota" },
+        { id: 2, nome: "Luna", pelo: "medio", tutor: "Elaine", endereco: "Av. Dom Luís, 500 - Meireles" },
+        { id: 3, nome: "Bidu", pelo: "curto", tutor: "Damaris", endereco: "Rua Maria Tomásia, 300 - Aldeota" },
+        { id: 4, nome: "Mel", pelo: "curto", tutor: "Daniela", endereco: "Rua Ana Bilhar, 1000 - Meireles" },
+        { id: 5, nome: "Thor", pelo: "longo", tutor: "Henrique", endereco: "Av. Beira Mar, 2500 - Meireles" },
+        { id: 6, nome: "Pipoca", pelo: "medio", tutor: "Fátima", endereco: "Rua Barbosa de Freitas, 40 - Aldeota" },
+        { id: 7, nome: "Amora", pelo: "curto", tutor: "Cláudio", endereco: "Rua Leite Albuquerque, 15 - Aldeota" },
+        { id: 8, nome: "Frederico", pelo: "longo", tutor: "Sônia", endereco: "Rua Norvinda Pires, 88 - Meireles" },
+        { id: 9, nome: "Cookie", pelo: "medio", tutor: "Roberto", endereco: "Av. Santos Dumont, 2000 - Aldeota" },
+        { id: 10, nome: "Bolinha", pelo: "curto", tutor: "Márcia", endereco: "Rua Canuto de Aguiar, 450 - Meireles" },
+        { id: 11, nome: "Rex", pelo: "curto", tutor: "Antônio", endereco: "Rua Vicente Leite, 320 - Aldeota" },
+        { id: 12, nome: "Belinha", pelo: "medio", tutor: "Patrícia", endereco: "Rua Pe. Valdevino, 900 - Aldeota" },
+        { id: 13, nome: "Floquinho", pelo: "longo", tutor: "Carlos", endereco: "Av. Abolição, 3000 - Meireles" },
+        { id: 14, nome: "Pandora", pelo: "medio", tutor: "Bruna", endereco: "Rua Joaquim Nabuco, 150 - Aldeota" },
+        { id: 15, nome: "Zeca", pelo: "curto", tutor: "Sérgio", endereco: "Rua Tibúrcio Cavalcante, 600 - Meireles" }
     ];
 
     const agendamentos = [
-        // DIA 0 (Hoje)
-        { id: 101, pet_nome: "Max", tutor: "Jeronimo", bairro: "Aldeota", dayOffset: 0, hora: "08:00", servico: "Banho + Hidratação", status: "pendente" },
-        { id: 102, pet_nome: "Luna", tutor: "Elaine", bairro: "Meireles", dayOffset: 0, hora: "10:00", servico: "Tosa Higiênica", status: "pendente" },
-        { id: 103, pet_nome: "Pipoca", tutor: "Fátima", bairro: "Aldeota", dayOffset: 0, hora: "14:00", servico: "Banho", status: "pendente" },
-        // DIA 1 (Amanhã)
-        { id: 104, pet_nome: "Bidu", tutor: "Damaris", bairro: "Aldeota", dayOffset: 1, hora: "09:00", servico: "Banho", status: "pendente" },
-        { id: 105, pet_nome: "Thor", tutor: "Henrique", bairro: "Meireles", dayOffset: 1, hora: "11:00", servico: "Tosa Completa", status: "pendente" },
-        { id: 106, pet_nome: "Amora", tutor: "Cláudio", bairro: "Aldeota", dayOffset: 1, hora: "15:00", servico: "Banho", status: "pendente" },
-        // DIA 2 (Depois)
-        { id: 107, pet_nome: "Mel", tutor: "Daniela", bairro: "Meireles", dayOffset: 2, hora: "08:30", servico: "Tosa Higiênica", status: "pendente" },
-        { id: 108, pet_nome: "Rex", tutor: "Antônio", bairro: "Aldeota", dayOffset: 2, hora: "10:30", servico: "Banho", status: "pendente" },
-        { id: 109, pet_nome: "Zeca", tutor: "Sérgio", bairro: "Meireles", dayOffset: 2, hora: "14:30", servico: "Banho", status: "pendente" }
+        { id: 101, pet_nome: "Max", tutor: "Jeronimo", endereco: "Rua Silva Paulet, 120 - Aldeota", bairro: "Aldeota", dayOffset: 0, hora: "08:00", servico: "Banho + Hidratação", status: "pendente" },
+        { id: 102, pet_nome: "Luna", tutor: "Elaine", endereco: "Av. Dom Luís, 500 - Meireles", bairro: "Meireles", dayOffset: 0, hora: "10:00", servico: "Tosa Higiênica", status: "pendente" },
+        { id: 103, pet_nome: "Pipoca", tutor: "Fátima", endereco: "Rua Barbosa de Freitas, 40 - Aldeota", bairro: "Aldeota", dayOffset: 0, hora: "14:00", servico: "Banho", status: "pendente" },
+        { id: 104, pet_nome: "Bidu", tutor: "Damaris", endereco: "Rua Maria Tomásia, 300 - Aldeota", bairro: "Aldeota", dayOffset: 1, hora: "09:00", servico: "Banho", status: "pendente" },
+        { id: 105, pet_nome: "Thor", tutor: "Henrique", endereco: "Av. Beira Mar, 2500 - Meireles", bairro: "Meireles", dayOffset: 1, hora: "11:00", servico: "Tosa Completa", status: "pendente" },
+        { id: 106, pet_nome: "Amora", tutor: "Cláudio", endereco: "Rua Leite Albuquerque, 15 - Aldeota", bairro: "Aldeota", dayOffset: 1, hora: "15:00", servico: "Banho", status: "pendente" },
+        { id: 107, pet_nome: "Mel", tutor: "Daniela", endereco: "Rua Ana Bilhar, 1000 - Meireles", bairro: "Meireles", dayOffset: 2, hora: "08:30", servico: "Tosa Higiênica", status: "pendente" },
+        { id: 108, pet_nome: "Rex", tutor: "Antônio", endereco: "Rua Vicente Leite, 320 - Aldeota", bairro: "Aldeota", dayOffset: 2, hora: "10:30", servico: "Banho", status: "pendente" },
+        { id: 109, pet_nome: "Zeca", tutor: "Sérgio", endereco: "Rua Tibúrcio Cavalcante, 600 - Meireles", bairro: "Meireles", dayOffset: 2, hora: "14:30", servico: "Banho", status: "pendente" }
     ];
 
     const data = { pets, agendamentos };
@@ -222,16 +219,10 @@ function seedInitialData() {
 
 // --- INICIALIZAÇÃO ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Tema
     if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-    
-    // Dados (Força reset se necessário)
     getPetFlowData();
-    
-    // Renderiza o Dashboard por padrão no carregamento
     renderDashboard();
 
-    // Vincula Cadastro
     const form = document.getElementById('form-pet');
     if(form) {
         form.onsubmit = (e) => {
@@ -250,9 +241,4 @@ document.addEventListener('DOMContentLoaded', () => {
             renderPets();
         };
     }
-
-    // Configura botões de Mapa
-    document.querySelectorAll('.routes-card button').forEach(btn => {
-        btn.onclick = () => alert("📍 Gerando rota otimizada para o Google Maps...");
-    });
 });
