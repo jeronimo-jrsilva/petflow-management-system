@@ -85,6 +85,15 @@ function confirmPayment() {
     renderDashboard();
 }
 
+function resetDemo() {
+    if (confirm("Deseja reiniciar a demonstração? Isso restaurará todos os atendimentos pendentes.")) {
+        localStorage.removeItem('petflow_data');
+        seedInitialData();
+        renderDashboard();
+        alert("♻️ Demo reiniciada com sucesso!");
+    }
+}
+
 // --- RENDERIZAÇÃO ---
 function renderDashboard() {
     const data = getPetFlowData();

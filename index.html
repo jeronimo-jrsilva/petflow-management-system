@@ -74,7 +74,10 @@
 
             <!-- PÁGINA: VALORES (Antiga Ajustes) -->
             <section id="config" class="page">
-                <h1>Tabela de Valores 💰</h1>
+                <div class="page-header">
+                    <h1>Tabela de Valores 💰</h1>
+                </div>
+                
                 <div class="card">
                     <h2>Serviços de Banho</h2>
                     <ul class="price-list">
@@ -83,12 +86,16 @@
                         <li><span>Pelo Longo</span> <strong>R$ 90,00</strong></li>
                     </ul>
                 </div>
-                <div class="card">
-                    <h2>Serviços de Tosa</h2>
-                    <ul class="price-list">
-                        <li><span>Tosa Higiênica</span> <strong>+ R$ 20,00</strong></li>
-                        <li><span>Tosa Completa</span> <strong>+ R$ 40,00</strong></li>
-                    </ul>
+
+                <!-- SEÇÃO DE DEMONSTRAÇÃO -->
+                <div class="card" style="border: 1px dashed var(--primary); background: rgba(99, 102, 241, 0.05);">
+                    <h2 style="color: var(--primary);">🛠️ Modo de Demonstração</h2>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        Use o botão abaixo para resetar os atendimentos e testar o fluxo novamente.
+                    </p>
+                    <button class="btn-primary" style="width: 100%; background: var(--primary-dark);" onclick="resetDemo()">
+                        Reiniciar Demo
+                    </button>
                 </div>
             </section>
         </main>
